@@ -88,7 +88,12 @@
         </dependency>
 
         <!-- ==================== Utilities ==================== -->
-
+        <!-- dotenv for Spring Boot -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
 
         <!-- SpringDoc OpenAPI — auto-generates Swagger UI -->
         <dependency>

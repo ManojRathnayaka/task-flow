@@ -1,16 +1,17 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { AuthData } from '../types';
 
-/**
- * AuthContext — global authentication state.
- *
- * Stores the current user and JWT token, and exposes login/logout actions.
- * Components consume this context via the useAuth() hook.
- */
-const AuthContext = createContext(null);
+interface AuthContextType {
+  user: AuthData | null;
+  loginUser: (authData: AuthData) => void;
+  logoutUser: () => void;
+  isAuthenticated: boolean;
+}
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    // Rehydrate from localStorage on page reload
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthData | null>(() => {
     try {
       const stored = localStorage.getItem('user');
       return stored ? JSON.parse(stored) : null;
@@ -19,8 +20,7 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const loginUser = useCallback((authData) => {
-    // authData = { token, username, email, userId }
+  const loginUser = useCallback((authData: AuthData) => {
     localStorage.setItem('token', authData.token);
     localStorage.setItem('user', JSON.stringify(authData));
     setUser(authData);
@@ -39,10 +39,6 @@ export function AuthProvider({ children }) {
   );
 }
 
-/**
- * useAuth — hook to access auth state in any component.
- * Throws if used outside of AuthProvider.
- */
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

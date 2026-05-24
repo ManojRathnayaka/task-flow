@@ -1,44 +1,16 @@
 import { useState } from 'react';
-import {
-  Plus, ListTodo, Clock, CheckCircle2,
-  RefreshCw, AlertCircle, BarChart2,
-} from 'lucide-react';
+import { Plus, ListTodo, Clock, CheckCircle2, RefreshCw, AlertCircle, BarChart2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import TaskForm from '../components/TaskForm';
 import StatCard from '../components/StatCard';
-import KanbanColumn from '../components/KanbanColumn';
+import KanbanBoard from '../components/KanbanBoard';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { useTasks } from '../hooks/useTasks';
-
-const STATUSES = ['TODO', 'IN_PROGRESS', 'DONE'];
-
-const COLUMN_META = {
-  TODO: {
-    label: 'To Do',
-    Icon: ListTodo,
-    headerClass: 'bg-slate-100 border border-slate-200 text-slate-700',
-    color: '#64748b',
-  },
-  IN_PROGRESS: {
-    label: 'In Progress',
-    Icon: Clock,
-    headerClass: 'bg-blue-50 border border-blue-200 text-blue-700',
-    color: '#3b82f6',
-  },
-  DONE: {
-    label: 'Done',
-    Icon: CheckCircle2,
-    headerClass: 'bg-green-50 border border-green-200 text-green-700',
-    color: '#22c55e',
-  },
-};
-
-const FILTER_OPTIONS = [
-  { key: 'ALL',    label: 'All' },
-  { key: 'LOW',    label: '🟢 Low' },
-  { key: 'MEDIUM', label: '🟡 Medium' },
-  { key: 'HIGH',   label: '🔴 High' },
-];
+import { Task, TaskStatus } from '../types';
+import { FILTER_OPTIONS } from '../constants';
+import { getTimeOfDay } from '../utils/dateUtils';
+import { cn } from '../utils/cn';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -57,9 +29,19 @@ export default function DashboardPage() {
     donePercent
   } = useTasks();
 
-  const [modalTask, setModalTask] = useState(undefined); // undefined = closed, null = new, obj = edit
+  const [modalTask, setModalTask] = useState<Task | null | undefined>(undefined); // undefined = closed, null = new, obj = edit
+  const [taskToDelete, setTaskToDelete] = useState<number | string | null>(null);
 
-  const handleDropTask = (taskId, newStatus) => {
+  const requestDelete = (id: number | string) => setTaskToDelete(id);
+
+  const confirmDelete = () => {
+    if (taskToDelete) {
+      handleDelete(taskToDelete);
+      setTaskToDelete(null);
+    }
+  };
+
+  const handleDropTask = (taskId: string, newStatus: TaskStatus) => {
     const taskToUpdate = tasks.find((t) => String(t.id) === String(taskId));
     if (taskToUpdate && taskToUpdate.status !== newStatus) {
       handleUpdate(taskToUpdate.id, {
@@ -73,7 +55,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50" id="dashboard-page">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-black" id="dashboard-page">
       <Navbar />
 
       <main className="flex-1 px-4 sm:px-6 py-8 max-w-7xl mx-auto w-full">
@@ -81,10 +63,10 @@ export default function DashboardPage() {
         {/* ── Header ── */}
         <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
-            <p className="text-slate-500 text-sm mb-1">
-              Good {getTimeOfDay()}, <strong className="text-slate-700">{user?.username}</strong> 👋
+            <p className="text-slate-500 dark:text-gray-400 text-sm mb-1">
+              Good {getTimeOfDay()}, <strong className="text-slate-700 dark:text-gray-200">{user?.username}</strong> 👋
             </p>
-            <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Tasks</h1>
           </div>
 
           <button
@@ -103,41 +85,41 @@ export default function DashboardPage() {
             Icon={BarChart2}
             value={stats.total}
             label="Total Tasks"
-            color="text-slate-600"
-            bg="bg-slate-100"
+            color="text-slate-600 dark:text-gray-300"
+            bg="bg-slate-100 dark:bg-slate-800/50"
             id="stat-total"
           />
           <StatCard
             Icon={ListTodo}
             value={stats.todo}
             label="To Do"
-            color="text-slate-600"
-            bg="bg-slate-100"
+            color="text-slate-600 dark:text-gray-300"
+            bg="bg-slate-100 dark:bg-slate-800/50"
             id="stat-todo"
           />
           <StatCard
             Icon={Clock}
             value={stats.inProgress}
             label="In Progress"
-            color="text-blue-600"
-            bg="bg-blue-100"
+            color="text-blue-600 dark:text-blue-400"
+            bg="bg-blue-100 dark:bg-blue-900/40"
             id="stat-in-progress"
           />
           <StatCard
             Icon={CheckCircle2}
             value={stats.done}
             label="Done"
-            color="text-green-600"
-            bg="bg-green-100"
+            color="text-green-600 dark:text-green-400"
+            bg="bg-green-100 dark:bg-green-900/40"
             id="stat-done"
           />
           {/* Progress bar card */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-center gap-2 shadow-sm col-span-2 lg:col-span-1" id="stat-progress">
+          <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl p-4 flex flex-col justify-center gap-2 shadow-sm col-span-2 lg:col-span-1" id="stat-progress">
             <div className="w-full flex justify-between items-center">
-              <span className="text-xs font-semibold text-slate-500">Completion</span>
-              <span className="text-sm font-bold text-green-600">{donePercent}%</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-gray-400">Completion</span>
+              <span className="text-sm font-bold text-green-600 dark:text-green-500">{donePercent}%</span>
             </div>
-            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-green-500 rounded-full transition-all duration-500 ease-in-out"
                 style={{ width: `${donePercent}%` }} 
@@ -152,11 +134,12 @@ export default function DashboardPage() {
             <button
               key={key}
               id={`filter-${key.toLowerCase()}`}
-              className={`px-3 py-1.5 rounded-full text-sm transition-colors border ${
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm transition-colors border",
                 priorityFilter === key 
-                  ? 'bg-blue-100 text-blue-700 border-blue-200 font-semibold' 
-                  : 'bg-white text-slate-600 border-slate-200 font-medium hover:bg-slate-50'
-              }`}
+                  ? "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-400 dark:border-blue-900/50 font-semibold" 
+                  : "bg-white text-slate-600 border-slate-200 font-medium hover:bg-slate-50 dark:bg-neutral-900 dark:text-gray-300 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              )}
               onClick={() => setPriorityFilter(key)}
             >
               {label}
@@ -165,8 +148,8 @@ export default function DashboardPage() {
 
           <button
             id="refresh-tasks-btn"
-            className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-            onClick={fetchTasks}
+            className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-gray-300 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-700 rounded-lg hover:bg-slate-50 dark:hover:bg-neutral-800 transition-colors shadow-sm"
+            onClick={() => fetchTasks()}
             title="Refresh"
           >
             <RefreshCw size={14} />
@@ -176,7 +159,7 @@ export default function DashboardPage() {
 
         {/* ── Error ── */}
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100 flex items-center gap-2" id="dashboard-error">
+          <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm border border-red-100 dark:border-red-900/50 flex items-center gap-2" id="dashboard-error">
             <AlertCircle size={16} />
             {error}
           </div>
@@ -189,28 +172,12 @@ export default function DashboardPage() {
             <p className="text-slate-500 text-sm font-medium">Loading tasks...</p>
           </div>
         ) : (
-          /* ── Kanban Board ── */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start" id="kanban-board">
-            {STATUSES.map((status) => {
-              const meta = COLUMN_META[status];
-              const columnTasks = getTasksByStatus(status);
-
-              return (
-                <KanbanColumn
-                  key={status}
-                  status={status}
-                  label={meta.label}
-                  Icon={meta.Icon}
-                  headerClass={meta.headerClass}
-                  color={meta.color}
-                  columnTasks={columnTasks}
-                  setModalTask={setModalTask}
-                  handleDelete={handleDelete}
-                  onDropTask={handleDropTask}
-                />
-              );
-            })}
-          </div>
+          <KanbanBoard
+            getTasksByStatus={(status) => getTasksByStatus(status)}
+            setModalTask={setModalTask}
+            requestDelete={requestDelete}
+            handleDropTask={handleDropTask}
+          />
         )}
       </main>
 
@@ -222,13 +189,15 @@ export default function DashboardPage() {
           onClose={() => setModalTask(undefined)}
         />
       )}
+
+      {/* ── Confirm Delete Dialog ── */}
+      <ConfirmDialog
+        isOpen={!!taskToDelete}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setTaskToDelete(null)}
+      />
     </div>
   );
-}
-
-function getTimeOfDay() {
-  const h = new Date().getHours();
-  if (h < 12) return 'morning';
-  if (h < 17) return 'afternoon';
-  return 'evening';
 }

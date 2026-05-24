@@ -1,22 +1,33 @@
 import { Plus } from 'lucide-react';
 import TaskCard from './TaskCard';
+import { Task, TaskStatus } from '../types';
+
+interface KanbanColumnProps {
+  status: TaskStatus;
+  label: string;
+  Icon: React.ElementType;
+  headerClass: string;
+  columnTasks: Task[];
+  setModalTask: (task: Task | null) => void;
+  handleDelete: (id: number | string) => void;
+  onDropTask: (taskId: string, newStatus: TaskStatus) => void;
+}
 
 export default function KanbanColumn({
   status,
   label,
   Icon,
   headerClass,
-  color,
   columnTasks,
   setModalTask,
   handleDelete,
   onDropTask,
-}) {
-  const handleDragOver = (e) => {
+}: KanbanColumnProps) {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId');
     if (taskId && onDropTask) {
@@ -42,9 +53,9 @@ export default function KanbanColumn({
 
       {/* Task Cards */}
       {columnTasks.length === 0 ? (
-        <div className="text-center py-10 px-4 text-slate-500 bg-white border-2 border-dashed border-slate-200 rounded-xl">
+        <div className="text-center py-10 px-4 text-slate-500 dark:text-gray-400 bg-white dark:bg-neutral-900 border-2 border-dashed border-slate-200 dark:border-neutral-800 rounded-xl">
           <div className="text-3xl mb-2 opacity-50">📋</div>
-          <p className="font-semibold text-slate-600 mb-1">No tasks here</p>
+          <p className="font-semibold text-slate-600 dark:text-gray-300 mb-1">No tasks here</p>
           <p className="text-xs">
             {status === 'TODO'
               ? 'Click "Add task" to add one'
@@ -66,7 +77,7 @@ export default function KanbanColumn({
       {status === 'TODO' && (
         <button
           id="quick-add-task-btn"
-          className="w-full flex items-center justify-start gap-2 px-4 py-3 text-sm font-medium text-slate-500 bg-transparent border-2 border-dashed border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-colors"
+          className="w-full flex items-center justify-start gap-2 px-4 py-3 text-sm font-medium text-slate-500 dark:text-gray-400 bg-transparent border-2 border-dashed border-slate-200 dark:border-neutral-700 rounded-xl hover:bg-slate-50 dark:hover:bg-neutral-800 hover:text-slate-700 dark:hover:text-gray-200 hover:border-slate-300 dark:hover:border-neutral-600 transition-colors"
           onClick={() => setModalTask(null)}
         >
           <Plus size={16} />

@@ -60,3 +60,8 @@ node_modules/
 
 # Windows
 Thumbs.db
+
+# Secrets
+.env
+backend/.env
+
