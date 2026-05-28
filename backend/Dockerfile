@@ -19,7 +19,7 @@ RUN mvn clean package -DskipTests
 # =============================================================================
 # Stage 2: Runtime Phase
 # =============================================================================
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # Copy the generated JAR file from the build stage
