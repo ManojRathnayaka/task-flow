@@ -46,7 +46,6 @@ export function useTasks() {
 
       return { previousTasks };
     },
-    // @ts-expect-error - react-query v5 context typing issue
     onError: (_err, _variables, context) => {
       if ((context as { previousTasks?: Task[] })?.previousTasks) {
         queryClient.setQueryData(['tasks', priorityFilter], (context as { previousTasks?: Task[] }).previousTasks);
@@ -69,7 +68,6 @@ export function useTasks() {
 
       return { previousTasks };
     },
-    // @ts-expect-error - react-query v5 context typing issue
     onError: (_err, _variables, context) => {
       if ((context as { previousTasks?: Task[] })?.previousTasks) {
         queryClient.setQueryData(['tasks', priorityFilter], (context as { previousTasks?: Task[] }).previousTasks);
