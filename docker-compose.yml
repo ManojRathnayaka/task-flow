@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # 1. Database Container (PostgreSQL 15)
+  # ===========================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: task-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-task_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-SecurePassword123!}
+      POSTGRES_DB: ${DB_NAME:-taskmanager}
+    volumes:
+      # Keep database records safe on your host VM using a Docker named volume
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Ensures backend only boots when PostgreSQL is fully initialized and accepting connections
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # Do not expose database ports to the host for maximum security; 
+    # it is accessible only by the backend container inside the virtual bridge network.
+
+  # ===========================================================================
+  # 2. Backend API Container (Spring Boot Java 17)
+  # ===========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: task-manager-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Spring Boot connects internally to the 'db' container using Docker's DNS
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-taskmanager}
+      DB_USERNAME: ${DB_USER:-task_user}
+      DB_PASSWORD: ${DB_PASSWORD:-SecurePassword123!}
+      JWT_SECRET: ${JWT_SECRET:-ThisIsAVeryLongSuperSecretKeyForJWTTokenSigningWith256BitsMinimum!}
+    expose:
+      - "8080"
+    # No ports exposed to host. All API calls are reverse proxied by Nginx on port 80.
+
+  # ===========================================================================
+  # 3. Frontend Web Server Container (React + Nginx)
+  # ===========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: task-manager-frontend
+    restart: unless-stopped
+    ports:
+      # Exposes standard web port 80 to the public internet
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  # Named volume for persistent Postgres database records
+  postgres_data:
